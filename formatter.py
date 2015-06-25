@@ -89,9 +89,20 @@ class Formatter(object):
         paragraph_format = document2.styles['Normal'].paragraph_format
         paragraph_format.space_before = 0 #Set paragraph spacing to 0 pica.
         paragraph_format.space_after = 0 
-        for paragraph in document1.paragraphs: #Copy each paragraph from document1 to document 2.
-            text = paragraph.text
-            document2.add_paragraph(text)
+        for p1 in document1.paragraphs: #Copy each paragraph from document1 to document 2.
+            p2 = document2.add_paragraph(p1.text)
+            # print ("paragraph %d has" % len(document1.paragraphs)),
+            # p2 = document2.add_paragraph()
+            # print "%d runs" % len(p1.runs)
+            # for r1 in p1.runs:
+            #     print ("\t" + r1.text), r1.italic
+            #     r2 = p2.add_run(r1.text)
+            #     r2.italic = r1.italic
+        # for p2 in document2.paragraphs:
+        #     print "p2 has %d runs" % len(p2.runs)
+        #     for run in p2.runs:
+        #         print "\t %s" % run.text,
+        #         print run.italic
 
     def removeSymbols(self):
         if not self.gettingSize: self.progress = "Removing symbols..."
@@ -343,29 +354,46 @@ class Formatter(object):
                 paragraph_2.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.CENTER
                 paragraph.text = ""
 
+    def fixItalics(self):
+        self.progress = "Fixing italics..."
+        for i in xrange(len(self.document1.paragraphs)):
+            p1 = self.document1.paragraphs[i]
+            p2 = self.document2.paragraphs[i]
+            for r1 in p1.runs:
+                if r1.italic == True:
+                    i = regexlib.match(p2.text,r1.text)
+                    r2a = p2.text[:i]
+                    r2b = p2.text[i:i+len(r1.text)]
+                    r2c = p2.text[i+len(r1.text):]
+                    p2.text = r2a
+                    r2b = p2.add_run(r2b)
+                    p2.add_run(r2c)
+                    r2b.italic = True
+
     def fix(self):
         if not self.gettingSize: self.progress = "Fixing mistakes..."
-        self.fixDoubleQuotes()
         self.fixEmDash()
         self.fixApostrophes()
         self.fixQuotations()
-        self.fixCarriageReturn()
         self.fixDoubleSpace()
         self.fixEllipses()
         self.fixPunctuation()
         self.fixWords()
         self.fixCaps()
-
-    def format(self):
-        if not self.gettingSize: self.progress = "Formatting story..."
-        self.removeSymbols()
+        self.fixItalics()
+        self.fixDoubleQuotes()
+        self.fixCarriageReturn()
+        self.formatChapterBreaks()
         self.insertTitle()
         self.insertAuthor()
         self.insertCopyright()
         self.insertPublisher()
+
+    def format(self):
+        if not self.gettingSize: self.progress = "Formatting story..."
+        self.removeSymbols()
         self.formatChapters()
         self.convertPunctuation()
-        self.formatChapterBreaks()
 
     def open(self):
         self.progress = "Opening file..."
@@ -377,6 +405,7 @@ class Formatter(object):
     # Sets the local result variable by processing the local story variable.
     def run(self):
         self.progress = "Running formatter..."
+        sys.stdout.flush()
         self.build()
         self.paragraphs = len([0 for paragraph in self.document2.paragraphs])
         self.getSize()
