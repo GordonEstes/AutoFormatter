@@ -20,3 +20,6 @@ Fixes ellipses
 Fixes hyphens and other punctuation
 Fixes word choice
 Formats chapter breaks
+
+Known Errors:
+Unable to take file paths containing spaces (e.g., "C:\Users\YourName\Folder With Spaces\file.docx")
