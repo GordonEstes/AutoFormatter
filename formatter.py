@@ -190,6 +190,7 @@ class Formatter(object):
         if not self.gettingSize: self.progress = "Fixing quotations..."
         for paragraph in self.document2.paragraphs:
             text = paragraph.text
+            text = regexlib.replaceSub(text,', said','," said')
             text = regexlib.replaceSub(text,' "',u' “')
             text = regexlib.replaceSub(text,'" ',u'” ')
             text = regexlib.replaceSub(text,'."',u'.”')
@@ -259,6 +260,7 @@ class Formatter(object):
             text = regexlib.replaceSub(text,". . .","...")
             text = regexlib.replaceSub(text,".....","...")
             text = regexlib.replaceSub(text,"....","...")
+            text = regexlib.replaceSub(text,". . ","")
             paragraph.text = text   
             self.step += 1  
 
