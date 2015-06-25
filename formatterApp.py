@@ -24,6 +24,7 @@ class FormatterApp(EventBasedAnimationClass):
         self.cy = self.height / 2
         self.buttons = {}
         self.textBoxes = {}
+        self.checkBoxes = {}
         self.path=""
         self.formatter = Formatter()
         self.running = False
@@ -33,6 +34,7 @@ class FormatterApp(EventBasedAnimationClass):
         self.timerDelay = 100 #milliseconds
         self.initButtons()
         self.initText()
+        self.initCheckBoxes()
         self.root.wm_title("AutoFormatter")
         self.canvas.v = IntVar()
 
@@ -58,6 +60,8 @@ class FormatterApp(EventBasedAnimationClass):
         publisher = self.textBoxes["Publisher"].get("1.0",'end-1c')
         copyright = self.textBoxes["Copyright"].get("1.0",'end-1c')
         newStory = Story(title,author,self.path,copyright,publisher)
+        chapterTitles = self.checkBoxes["Titles"]
+        self.formatter.chapterNames = bool(self.var.get())
         self.formatter.take(newStory)
         self.running = True
         self.formatThread = thread.start_new_thread(self.formatter.run, ())
@@ -69,6 +73,11 @@ class FormatterApp(EventBasedAnimationClass):
         self.buttons["Browse"] = browse
         go = Button(self.canvas,text="Go",command=self.go,width=6,height=1)
         self.buttons["Go"] = go
+
+    def initCheckBoxes(self):
+        self.var = IntVar()
+        chapterTitles = Checkbutton(self.canvas,text="Use chapter titles",variable=self.var)
+        self.checkBoxes["Titles"] = chapterTitles
 
     def initText(self):
         height = 1
@@ -127,10 +136,10 @@ class FormatterApp(EventBasedAnimationClass):
         if self.running:
             progress = self.canvas.create_text(w*4/8,h*4/8,text=self.formatter.progress)
         else:
-            title = self.canvas.create_text(w*1/8,h*1/8,text="Title:",anchor="e")
-            author = self.canvas.create_text(w*1/8,h*2/8,text="Author:",anchor="e")
-            publisher = self.canvas.create_text(w*1/8,h*3/8,text="Publisher:",anchor="e")
-            copyright = self.canvas.create_text(w*1/8,h*4/8,text="Copyright:",anchor="e")
+            title = self.canvas.create_text(w*1.25/8,h*1/8,text="Title:",anchor="e")
+            author = self.canvas.create_text(w*1.25/8,h*2/8,text="Author:",anchor="e")
+            publisher = self.canvas.create_text(w*1.25/8,h*3/8,text="Publisher:",anchor="e")
+            copyright = self.canvas.create_text(w*1.25/8,h*4/8,text="Copyright:",anchor="e")
             path = self.canvas.create_text(w*1.5/8,h*6/8,text="Path: %s" % self.path,anchor="w")
 
     def drawProgressBar(self):
@@ -148,6 +157,16 @@ class FormatterApp(EventBasedAnimationClass):
                 backBar = self.canvas.create_rectangle(z1,n1,z2,n2,fill="gray70")
                 progressBar = self.canvas.create_rectangle(x1,y1,x2,y2,fill=color)
 
+    def drawCheckButtons(self):
+        w = self.width
+        h = self.height
+        if self.running:
+            pass
+        else:
+            chapterTitles = self.checkBoxes["Titles"]
+            self.canvas.create_window(w*2/8,h*5/8,window=chapterTitles)
+
+
     def redrawAll(self):
         self.canvas.delete(ALL)
         self.drawBackground()
@@ -155,3 +174,4 @@ class FormatterApp(EventBasedAnimationClass):
         self.drawTextBoxes()
         self.drawProgressBar()
         self.drawText()
+        self.drawCheckButtons()

@@ -9,7 +9,7 @@
 
 import sys
 # sys.path.insert(0,"/Users/Gordon/Gordon's Files/AutoFormatter/lib")
-import filelib, listlib, regexlib, doclib
+import filelib, listlib, regexlib, doclib, numlib
 import os, string
 from docx import Document
 from docx.enum.style import WD_STYLE_TYPE
@@ -140,7 +140,7 @@ class Formatter(object):
         chapter = False
         for paragraph in self.document2.paragraphs:
             text = paragraph.text
-            if ("Chapter" or "CHAPTER") in text:
+            if ("Chapter" or "CHAPTER" or "BOOK" or "Book") in text:
                 if len(text) <= len("Chapter XXXXIIII"):
                    chapter = True
                    paragraph.style = 'Heading 2'
@@ -209,7 +209,6 @@ class Formatter(object):
     def fixCaps(self):
         if not self.gettingSize: 
             self.progress = "Fixing chapter capitalization..."
-            print self.progress
         for paragraph in self.document2.paragraphs:
             if len(paragraph.text) < 2: 
                 continue
@@ -218,7 +217,6 @@ class Formatter(object):
             if (paragraph.text[0] in string.ascii_uppercase
             and paragraph.text[1] in string.ascii_uppercase
             and paragraph.text[2] in string.ascii_uppercase):
-                print("Got one :D")
                 s = paragraph.text
                 for i in xrange(1,len(s)):
                     if s[i] in string.ascii_lowercase: break
@@ -226,7 +224,6 @@ class Formatter(object):
                         s = regexlib.replaceIndex(s,i,string.lower(s[i]))
                 paragraph.text = s
             self.step += 1
-
 
     def fixCarriageReturn(self):
         if not self.gettingSize: self.progress = "Fixing carriage returns..."
