@@ -59,4 +59,4 @@ def main():
     formatterApp.run()
     return 0
 
-main()
+print main()

@@ -68,6 +68,7 @@ class Formatter(object):
     # story value to equal it.
     def take(self,story):
         self.progress = "Taking an unformatted story..."
+        # story.path = '"%s"' % story.path
         self.story = story
         self.document1 = Document(story.path)
         self.document2 = Document()
@@ -205,6 +206,28 @@ class Formatter(object):
             paragraph.text = text
             self.step += 1
 
+    def fixCaps(self):
+        if not self.gettingSize: 
+            self.progress = "Fixing chapter capitalization..."
+            print self.progress
+        for paragraph in self.document2.paragraphs:
+            if len(paragraph.text) < 2: 
+                continue
+            if paragraph.style.name != "Normal":
+                continue
+            if (paragraph.text[0] in string.ascii_uppercase
+            and paragraph.text[1] in string.ascii_uppercase
+            and paragraph.text[2] in string.ascii_uppercase):
+                print("Got one :D")
+                s = paragraph.text
+                for i in xrange(1,len(s)):
+                    if s[i] in string.ascii_lowercase: break
+                    if s[i] in string.ascii_uppercase:
+                        s = regexlib.replaceIndex(s,i,string.lower(s[i]))
+                paragraph.text = s
+            self.step += 1
+
+
     def fixCarriageReturn(self):
         if not self.gettingSize: self.progress = "Fixing carriage returns..."
         last = None
@@ -260,7 +283,8 @@ class Formatter(object):
             text = regexlib.replaceSub(text,". . .","...")
             text = regexlib.replaceSub(text,".....","...")
             text = regexlib.replaceSub(text,"....","...")
-            text = regexlib.replaceSub(text,". . ","")
+            text = regexlib.replaceSub(text," . .",u'...”')
+            text = regexlib.replaceSub(text,". . ",u"“...")
             paragraph.text = text   
             self.step += 1  
 
@@ -322,7 +346,6 @@ class Formatter(object):
                 paragraph_2.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.CENTER
                 paragraph.text = ""
 
-
     def fix(self):
         if not self.gettingSize: self.progress = "Fixing mistakes..."
         self.fixDoubleQuotes()
@@ -334,6 +357,7 @@ class Formatter(object):
         self.fixEllipses()
         self.fixPunctuation()
         self.fixWords()
+        self.fixCaps()
 
     def format(self):
         if not self.gettingSize: self.progress = "Formatting story..."
@@ -363,6 +387,5 @@ class Formatter(object):
         self.fix()
         self.save()
         self.stage = "Complete"
-        try: self.open()
-        except: print("The file could not be opened. :( Sorry!")
+        self.open()
         self.step = 0.0
