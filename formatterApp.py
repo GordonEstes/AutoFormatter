@@ -38,7 +38,6 @@ class FormatterApp(EventBasedAnimationClass):
         self.root.wm_title("AutoFormatter")
         self.canvas.v = IntVar()
 
-
     def onTimerFired(self):
         if self.running and self.formatter.stage == "Complete":
             self.running = False
@@ -127,8 +126,8 @@ class FormatterApp(EventBasedAnimationClass):
             copyright = self.textBoxes["Copyright"]
             self.canvas.create_window(w*1.5/8,h*1/8,window=title,anchor="w")
             self.canvas.create_window(w*1.5/8,h*2/8,window=author,anchor="w")
-            self.canvas.create_window(w*1.5/8,h*3/8,window=copyright,anchor="w")
-            self.canvas.create_window(w*1.5/8,h*4/8,window=publisher,anchor="w")        
+            self.canvas.create_window(w*1.5/8,h*3/8,window=publisher,anchor="w")
+            self.canvas.create_window(w*1.5/8,h*4/8,window=copyright,anchor="w")        
 
     def drawText(self):
         w = self.width
@@ -165,7 +164,6 @@ class FormatterApp(EventBasedAnimationClass):
         else:
             chapterTitles = self.checkBoxes["Titles"]
             self.canvas.create_window(w*2/8,h*5/8,window=chapterTitles)
-
 
     def redrawAll(self):
         self.canvas.delete(ALL)
