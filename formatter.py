@@ -91,18 +91,6 @@ class Formatter(object):
         paragraph_format.space_after = 0 
         for p1 in document1.paragraphs: #Copy each paragraph from document1 to document 2.
             p2 = document2.add_paragraph(p1.text)
-            # print ("paragraph %d has" % len(document1.paragraphs)),
-            # p2 = document2.add_paragraph()
-            # print "%d runs" % len(p1.runs)
-            # for r1 in p1.runs:
-            #     print ("\t" + r1.text), r1.italic
-            #     r2 = p2.add_run(r1.text)
-            #     r2.italic = r1.italic
-        # for p2 in document2.paragraphs:
-        #     print "p2 has %d runs" % len(p2.runs)
-        #     for run in p2.runs:
-        #         print "\t %s" % run.text,
-        #         print run.italic
 
     def removeSymbols(self):
         if not self.gettingSize: self.progress = "Removing symbols..."
@@ -362,6 +350,7 @@ class Formatter(object):
             for r1 in p1.runs:
                 if r1.italic == True:
                     i = regexlib.match(p2.text,r1.text)
+                    if i == -1: continue
                     r2a = p2.text[:i]
                     r2b = p2.text[i:i+len(r1.text)]
                     r2c = p2.text[i+len(r1.text):]
