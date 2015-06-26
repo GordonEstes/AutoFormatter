@@ -14,6 +14,7 @@ import os, string
 from docx import Document
 from docx.enum.style import WD_STYLE_TYPE
 from docx.enum.text import WD_ALIGN_PARAGRAPH
+import unicodedata
 from docx.shared import Inches
 from docx.shared import Pt
 from story import Story
@@ -35,6 +36,7 @@ class Formatter(object):
         self.step = 0.0
         self.steps = 0.0
         self.gettingSize = False
+        self.paragraphDict = {}
         
     def initStyles(self):
         self.progress = "Initializing styles..."
@@ -68,7 +70,6 @@ class Formatter(object):
     # story value to equal it.
     def take(self,story):
         self.progress = "Taking an unformatted story..."
-        # story.path = '"%s"' % story.path
         self.story = story
         self.document1 = Document(story.path)
         self.document2 = Document()
@@ -91,6 +92,7 @@ class Formatter(object):
         paragraph_format.space_after = 0 
         for p1 in document1.paragraphs: #Copy each paragraph from document1 to document 2.
             p2 = document2.add_paragraph(p1.text)
+            self.paragraphDict[p1.text] = p2
 
     def removeSymbols(self):
         if not self.gettingSize: self.progress = "Removing symbols..."
@@ -107,19 +109,19 @@ class Formatter(object):
             self.step += 1
 
     def insertTitle(self):
-        self.progress = "Adding title..."
+        if not self.gettingSize: self.progress = self.progress = "Adding title..."
         title = self.story.title
         style = 'Heading 1'
         self.document2.paragraphs[0].insert_paragraph_before(title,style)
 
     def insertAuthor(self):
-        self.progress = "Adding author..."
+        if not self.gettingSize: self.progress = self.progress = "Adding author..."
         author = self.story.author
         style = 'Heading 2'
         self.document2.paragraphs[1].insert_paragraph_before(author,style)
 
     def insertCopyright(self):
-        self.progress = "Adding copyright..."
+        if not self.gettingSize: self.progress = self.progress = "Adding copyright..."
         copyright = self.story.copyright
         if copyright == "": return
         paragraph = self.document2.paragraphs[2]
@@ -127,7 +129,7 @@ class Formatter(object):
         copyrightParagraph.add_run("(copyright %s)" % copyright).italic = True
 
     def insertPublisher(self):
-        self.progress = "Adding publisher..."
+        if not self.gettingSize: self.progress = self.progress = "Adding publisher..."
         publisher = self.story.publisher
         if publisher == "": return
         paragraph = self.document2.paragraphs[2]
@@ -154,7 +156,8 @@ class Formatter(object):
         if not self.gettingSize: self.progress = "Fixing double quotes..."
         for paragraph in self.document2.paragraphs:
             text = paragraph.text
-            i = string.find(text,'" "')        
+            i = regexlib.match(text,u'” “')  
+            if i == -1: i = regexlib.match(text,'" "')      
             if i != -1:
                 text1 = text[:i+1]
                 text2 = text[i+2:]
@@ -308,10 +311,9 @@ class Formatter(object):
             text = paragraph.text
             text = regexlib.replaceWord(text,"comer","corner")
             text = regexlib.replaceWord(text,"bom","born")
-            self.step += 1
             text = regexlib.replaceWord(text,"modem","modern")
             text = regexlib.replaceWord(text,"tiling","thing")
-            self.step += 1
+            text = regexlib.replaceWord(text,"diat","that")
             text = regexlib.replaceWord(text,"sec","see")
             text = regexlib.replaceWord(text,"secs","sees")
             text = regexlib.replaceWord(text,"Fd","I'd")
@@ -341,14 +343,15 @@ class Formatter(object):
                 paragraph_2 = paragraph.insert_paragraph_before(paragraph.text,style)
                 paragraph_2.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.CENTER
                 paragraph.text = ""
+            self.step += 1
 
     def fixItalics(self):
         self.progress = "Fixing italics..."
-        for i in xrange(len(self.document1.paragraphs)):
-            p1 = self.document1.paragraphs[i]
-            p2 = self.document2.paragraphs[i]
+        print self.progress
+        for p1 in self.document1.paragraphs:
+            p2 = self.paragraphDict[p1.text]
             for r1 in p1.runs:
-                if r1.italic == True:
+                if r1.italic or "Italic" in r1.style.name:
                     i = regexlib.match(p2.text,r1.text)
                     if i == -1: continue
                     r2a = p2.text[:i]
@@ -358,10 +361,12 @@ class Formatter(object):
                     r2b = p2.add_run(r2b)
                     p2.add_run(r2c)
                     r2b.italic = True
+            self.step += 4
 
     def fix(self):
         if not self.gettingSize: self.progress = "Fixing mistakes..."
         self.fixEmDash()
+        self.fixDoubleQuotes()
         self.fixApostrophes()
         self.fixQuotations()
         self.fixDoubleSpace()
@@ -396,7 +401,6 @@ class Formatter(object):
         self.progress = "Running formatter..."
         sys.stdout.flush()
         self.build()
-        self.paragraphs = len([0 for paragraph in self.document2.paragraphs])
         self.getSize()
         self.format()
         self.fix()
