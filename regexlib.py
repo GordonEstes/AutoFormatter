@@ -22,23 +22,27 @@ import string
 import os
 import unicodedata
 
+# Removes all instances of a substring (sub) from a string (s). Possibly redundant.
 def removeAll(s,sub):
 	while(match(s,sub) != -1):
 		s = removeSub(s,sub)
 	return s
 
+# Replaces all instances of substring (new) in string (s) with string (new). Possibly
+# redundant.
 def replaceAll(s,sub,new):
 	while(match(s,sub) != -1):
 		s = replaceSub(s,sub,new)
 	return s
 
+# Returns a list containing the Unicode name of each sequential character in the
+# given string (s).
 def getChar(s):
 	chars = ""
 	for i in xrange(len(s)):
 		chars += unicodedata.name(u'%s' % s[i])
 		chars += "\n"
 	return chars
-
 
 # Takes in a string, a start index, and an end index, and returns a string with the 
 # defined substring removed.
@@ -58,12 +62,16 @@ def findAll(s,sub):
 		n += 1
 	return n
 
+# Determines the equality of two strings using the match function.
 def eq(s1,s2):
 	if len(s1) != len(s2): return False
 	if match(s1,s2) != 0: return False
 	return True
 
+# Determines whether two one-character strings are the same Unicode character.
 def symbolEq(s1,s2):
+	if len(s1) != len(s2): return False
+	if len(s1) != 0: return False
 	try:
 		x1 = unicodedata.name(u'%s' % s1.decode('utf-8'))
 		x2 = unicodedata.name(u'%s' % s2.decode('utf-8'))
@@ -72,7 +80,8 @@ def symbolEq(s1,s2):
 	return x1 == x2
 
 # Returns the starting index of the first instance of a regex substring within a 
-# larger string, returning -1 if the substring is not present.
+# larger string, returning -1 if the substring is not present. Note that "@" stands
+# for a wildcard, and "#" stands for an alphabetic wildcard (i.e., abc...ABC...).
 def match(s,sub):
 	if len(sub) > len(s): return -1
 	i = 0 #Index within s
@@ -105,20 +114,27 @@ def match(s,sub):
 			n = -1
 	return -1
 
+# Returns the word containing the character s[i] within string s.
+# Returns " " if s[i] is blank and "" if i is out of range.
 def getWord(s,i):
+	if i >= len(s) or i < 0: return ""
 	if s[i] == " ": return s[i]
 	(j,k) = (i,i)
 	while j > 0 and s[j] != " ": j -= 1
 	while k < len(s) and s[k] != " ": k += 1
 	return s[j+1:k]
 
+# Returns the word previous to the word containing the character s[i]
+# within string s.
 def prevWord(s,i):
-	if i <= 0: return None
+	if i <= 0 or i >= len(s): return None
 	if s[i] == " ": return prevWord(s,i-1)
 	j = i
 	while j >= 0 and s[j] != " ": j -= 1
 	return getWord(s,j-1)
 
+# Returns the word following the word containing the character s[i]
+# within string s.
 def nextWord(s,i):
 	if i >= len(s) - 1: return None
 	if s[i] == " ": return nextWord(s,i+1)
@@ -126,6 +142,8 @@ def nextWord(s,i):
 	while k <= len(s) - 1 and s[k] != " ": k += 1
 	return getWord(s,k+1)
 
+# Returns a version of string s with the first instance of the word containing 
+# the character s[i] replaced with the substring (new)
 def replaceThisWord(s,i,new):
 	if i >= len(s) or i < 0: return s
 	if s[i] == " ": return s
@@ -136,6 +154,8 @@ def replaceThisWord(s,i,new):
 	s = s[:j+1] + new + s[k:]
 	return s
 
+# Returns the index (i) of the full word corresponding to the substring(sub)
+# within string (s).
 def matchWord(s,sub,n=0):
 	i = match(s,sub)
 	if i == -1: return -1
@@ -159,10 +179,14 @@ def removeSub(s,sub):
 		s = s[:i] + s[i+len(sub):]
 	return s
 
+# Returns a version of string (s) with the character at index (i) replaced
+# with the character (t).
 def replaceIndex(s,i,t):
 	if i < 0 or i >= len(s): return s
 	return s[:i] + t + s[i+1:]
 
+# Returns a version of the string (s) with all instances of substring (sub)
+# replaced with the substring (new).
 def replaceSub(s,sub,new):
 	while True:
 		i = match(s,sub)
@@ -176,6 +200,8 @@ def replaceSub(s,sub,new):
 		s = "%s%s%s" % (s[:i],newer,s[i+len(sub):])
 	return s
 
+# Returns a version of the string (s) with all full-word instances of the
+# substring (sub) replaced with the substring (new).
 def replaceWord(s,sub,new):
 	while True:
 		i = matchWord(s,sub)
@@ -191,12 +217,14 @@ def nextNonInt(s):
 			return i 
 	return -1 
 
+# Returns the index of the first integer character in the given string.
 def nextInt(s):
 	for i in xrange(len(s)):
 		if s[i] in "1234567890":
 			return i
 	return -1
 
+# Useless. Disregard this :V
 def toFront(s,sub):
 	i = match(s,sub)
 	if i == -1: 
@@ -208,6 +236,7 @@ def toFront(s,sub):
 	s = sub + s
 	return s
 
+# Checks whether a given string is comprised entirely of integers.
 def isInt(s):
 	if s == "":
 		return False
@@ -216,12 +245,16 @@ def isInt(s):
 			return False
 	return True
 
+# Returns the type of value x in string form.
 def stype(x):
 	return str(type(x))
 
+# Returns a reversed form of string x.
 def reverse(x):
 	return x[::-1]
 
+# Returns a copy of string (s) with the ending clipped up to and including
+# substring (x) (e.g. clipRight('hello.doc','doc') => 'hello').
 def clipRight(s,x):
 	s = reverse(s)
 	i = match(s,x)

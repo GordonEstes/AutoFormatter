@@ -75,6 +75,8 @@ class Formatter(object):
         self.document2 = Document()
         self.initStyles()
 
+    # Saves the final document to a docx with the '_formatted' suffix in the same directory as the
+    # original.
     def save(self):
         self.progress = "Saving formatted document..."
         path = self.story.path
@@ -83,6 +85,9 @@ class Formatter(object):
         path += "_formatted.docx"
         document.save(path)
 
+    # Creates the document1 (original) and document2 (formatted) Document objects
+    # and populates the latter using the plaintext version of the former. Also sets
+    # the base formatting and style of document2.
     def build(self):
         self.progress = "Building document..."
         document1 = self.document1
@@ -94,6 +99,9 @@ class Formatter(object):
             p2 = document2.add_paragraph(p1.text)
             self.paragraphDict[p1.text] = p2
 
+    # Removes the following symbols from document2: "»","|","«","•","    "
+    # Also changes em-dashes (—) into triple en-dashes (---) to avoid formatting
+    # bugs later on.
     def removeSymbols(self):
         if not self.gettingSize: self.progress = "Removing symbols..."
         document2 = self.document2
@@ -108,18 +116,22 @@ class Formatter(object):
             paragraph.text = text
             self.step += 1
 
+    # Inserts a properly formatted (Heading 1) title at the top of the document.
     def insertTitle(self):
         if not self.gettingSize: self.progress = self.progress = "Adding title..."
         title = self.story.title
         style = 'Heading 1'
         self.document2.paragraphs[0].insert_paragraph_before(title,style)
 
+    # Inserts a properly formatted (Heading 2) author attribution beneath the document
+    # title.
     def insertAuthor(self):
         if not self.gettingSize: self.progress = self.progress = "Adding author..."
         author = self.story.author
         style = 'Heading 2'
         self.document2.paragraphs[1].insert_paragraph_before(author,style)
 
+    # Inserts the copyright date beneath the author, if applicable.
     def insertCopyright(self):
         if not self.gettingSize: self.progress = self.progress = "Adding copyright..."
         copyright = self.story.copyright
@@ -128,6 +140,7 @@ class Formatter(object):
         copyrightParagraph = paragraph.insert_paragraph_before("")
         copyrightParagraph.add_run("(copyright %s)" % copyright).italic = True
 
+    # Inserts the publisher, if applicable.
     def insertPublisher(self):
         if not self.gettingSize: self.progress = self.progress = "Adding publisher..."
         publisher = self.story.publisher
@@ -136,6 +149,8 @@ class Formatter(object):
         publisherParagraph = paragraph.insert_paragraph_before("")
         publisherParagraph.add_run("(publisher %s)" % publisher).italic = True
 
+    # Finds each chapter header and formats it appropriately (i.e., "Chapter __" becomes
+    # Heading 2, and the chapter names, if present, become Heading 3)
     def formatChapters(self):
         if not self.gettingSize: self.progress = "Formatting chapters..."
         chapter = False
@@ -152,6 +167,8 @@ class Formatter(object):
                 chapter = False
             self.step += 1
 
+    # Removes the scanner error of mashing two separate lines of dialogue together into one
+    # paragraph.
     def fixDoubleQuotes(self):
         if not self.gettingSize: self.progress = "Fixing double quotes..."
         for paragraph in self.document2.paragraphs:
@@ -165,6 +182,7 @@ class Formatter(object):
                 paragraph.insert_paragraph_before(text1)
             self.step += 1
 
+    # Translates unicode punctuation to ASCII punctuation.
     def convertPunctuation(self):
         if not self.gettingSize: self.progress = "Converting punctuation..."
         for paragraph in self.document2.paragraphs:
@@ -175,6 +193,7 @@ class Formatter(object):
             paragraph.text = text
             self.step += 1
 
+    # Replaces '---' with '—' and fixes em-dash spacing errors. 
     def fixEmDash(self):
         if not self.gettingSize: self.progress = "Fixing em-dashes..."
         document2 = self.document2
@@ -189,6 +208,8 @@ class Formatter(object):
             paragraph.text = text
             self.step += 1
 
+    # Fixes some common quotation mark errors and changes ASCII quotation marks
+    # to the appropriate Unicode quotation marks.
     def fixQuotations(self):
         if not self.gettingSize: self.progress = "Fixing quotations..."
         for paragraph in self.document2.paragraphs:
@@ -208,6 +229,8 @@ class Formatter(object):
             paragraph.text = text
             self.step += 1
 
+    # Removes the all-caps word(s) beginning each chapter, which are common to 
+    # older stories
     def fixCaps(self):
         if not self.gettingSize: 
             self.progress = "Fixing chapter capitalization..."
@@ -227,6 +250,8 @@ class Formatter(object):
                 paragraph.text = s
             self.step += 1
 
+    # Finds paragraphs beginning with a lowercase character and re-attaches them to the
+    # end of the preceding paragraph.
     def fixCarriageReturn(self):
         if not self.gettingSize: self.progress = "Fixing carriage returns..."
         last = None
@@ -239,6 +264,8 @@ class Formatter(object):
                 last = paragraph
             self.step += 1
 
+    # Fixes some common apostrophe errors and changes ASCII apostrophes to the
+    # appropriate Unicode apostrophe.
     def fixApostrophes(self):
         if not self.gettingSize: self.progress = "Fixing apostrophes..."
         for paragraph in self.document2.paragraphs:
@@ -263,6 +290,7 @@ class Formatter(object):
             paragraph.text = text
             self.step += 1
 
+    # Removes double spaces and replaces them with single spaces.
     def fixDoubleSpace(self):
         if not self.gettingSize: self.progress = "Fixing double spaces..."
         for paragraph in self.document2.paragraphs:
@@ -270,6 +298,7 @@ class Formatter(object):
                 paragraph.text = regexlib.replaceSub(paragraph.text, "  ", " ")
             self.step += 1
 
+    # Changes common ellipse misprints to proper formatting.
     def fixEllipses(self):
         if not self.gettingSize: self.progress = "Fixing ellipses..."
         for paragraph in self.document2.paragraphs:
@@ -287,6 +316,8 @@ class Formatter(object):
             paragraph.text = text   
             self.step += 1  
 
+    # Fixes hyphen spacing, removes nonnecessary asterisks, and removes
+    # additional symbols.      
     def fixPunctuation(self):
         if not self.gettingSize: self.progress = "Fixing punctuation..."
         for paragraph in self.document2.paragraphs:
@@ -305,6 +336,7 @@ class Formatter(object):
             paragraph.text = text
             self.step += 1
 
+    # Replaces/fixes words commonly mistaken by the scanner for one another.
     def fixWords(self):
         if not self.gettingSize: self.progress = "Fixing words..."
         for paragraph in self.document2.paragraphs:
@@ -320,6 +352,8 @@ class Formatter(object):
             paragraph.text = text
             self.step += 1
 
+    # Retrieves the total number of steps to be taken within the document in order
+    # to properly set the loading bar.
     def getSize(self):
         self.progress = "Getting document size..."
         document2 = self.document2
@@ -333,8 +367,9 @@ class Formatter(object):
         self.step = 0.0
         self.document2 = document2
 
-    def formatChapterBreaks(self):
-        if not self.gettingSize: self.progress = "Separating chapters..."
+    # Spaces and justifies the "* * * *" scene break common to stories.
+    def formatSceneBreaks(self):
+        if not self.gettingSize: self.progress = "Separating scenes..."
         for paragraph in self.document2.paragraphs:
             if paragraph.text == "* * * *":
                 text = ""
@@ -345,6 +380,8 @@ class Formatter(object):
                 paragraph.text = ""
             self.step += 1
 
+    # Scans the original document for italicized words/paragraph runs and sets
+    # those words to italics in the formatted document (if they can be found).
     def fixItalics(self):
         self.progress = "Fixing italics..."
         print self.progress
@@ -371,6 +408,7 @@ class Formatter(object):
                     r2b.italic = True
             self.step += 4
 
+    # Calls the other methods in their proper order.
     def fix(self):
         if not self.gettingSize: self.progress = "Fixing mistakes..."
         self.fixEmDash()
@@ -385,18 +423,20 @@ class Formatter(object):
         self.fixItalics()
         self.fixDoubleQuotes()
         self.fixCarriageReturn()
-        self.formatChapterBreaks()
+        self.formatSceneBreaks()
         self.insertTitle()
         self.insertAuthor()
         self.insertCopyright()
         self.insertPublisher()
 
+    # Calls the other methods in their proper order.
     def format(self):
         if not self.gettingSize: self.progress = "Formatting story..."
         self.removeSymbols()
         self.formatChapters()
         self.convertPunctuation()
 
+    # Opens the formatted docx after it's been saved.
     def open(self):
         self.progress = "Opening file..."
         path = self.story.path
