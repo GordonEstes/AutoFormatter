@@ -141,7 +141,7 @@ class Formatter(object):
         chapter = False
         for paragraph in self.document2.paragraphs:
             text = paragraph.text
-            if ("Chapter" or "CHAPTER" or "BOOK" or "Book") in text:
+            if "CHAPTER" in text or "Chapter" in text or "BOOK" in text or "Book" in text:
                 if len(text) <= len("Chapter XXXXIIII"):
                    chapter = True
                    paragraph.style = 'Heading 2'
@@ -212,7 +212,7 @@ class Formatter(object):
         if not self.gettingSize: 
             self.progress = "Fixing chapter capitalization..."
         for paragraph in self.document2.paragraphs:
-            if len(paragraph.text) < 2: 
+            if len(paragraph.text) < 3: 
                 continue
             if paragraph.style.name != "Normal":
                 continue
@@ -349,14 +349,22 @@ class Formatter(object):
         self.progress = "Fixing italics..."
         print self.progress
         for p1 in self.document1.paragraphs:
+            r = -1
             p2 = self.paragraphDict[p1.text]
             for r1 in p1.runs:
+                r += 1
                 if r1.italic or "Italic" in r1.style.name:
-                    i = regexlib.match(p2.text,r1.text)
+                    last = "" if r == 0 else p1.runs[r-1].text
+                    this = p1.runs[r].text
+                    next = "" if r == len(p1.runs) - 1 else p1.runs[r+1].text
+                    s = last+this+next
+                    i = regexlib.match(p2.text,s)
                     if i == -1: continue
+                    i += len(last)
+                    k = i + len(this)
                     r2a = p2.text[:i]
-                    r2b = p2.text[i:i+len(r1.text)]
-                    r2c = p2.text[i+len(r1.text):]
+                    r2b = p2.text[i:k]
+                    r2c = p2.text[k:]
                     p2.text = r2a
                     r2b = p2.add_run(r2b)
                     p2.add_run(r2c)
