@@ -127,7 +127,7 @@ class Formatter(object):
     # title.
     def insertAuthor(self):
         if not self.gettingSize: self.progress = self.progress = "Adding author..."
-        author = self.story.author
+        author = "by " + self.story.author
         style = 'Heading 2'
         self.document2.paragraphs[1].insert_paragraph_before(author,style)
 
@@ -224,6 +224,8 @@ class Formatter(object):
             text = regexlib.replaceSub(text,'—"',u'—”')
             text = regexlib.replaceSub(text,'’"',u'’”')
             text = regexlib.replaceSub(text,'\'"',u'’”')
+            text = regexlib.replaceSub(text,'";',u'”;')
+            text = regexlib.replaceSub(text,'":',u'”:')
             text = regexlib.replaceSub(text,'"',u'“')
             paragraph.text = text
             self.step += 1
@@ -358,6 +360,8 @@ class Formatter(object):
             text = regexlib.replaceWord(text,"tire","the")
             text = regexlib.replaceSub(text,"boy friend","boyfriend")
             text = regexlib.replaceSub(text,"girl friend","girlfriend")
+            text = regexlib.replaceSub(text,"Pie ", "He")
+            text = regexlib.replaceSub(text,"Fie,", "He")
             paragraph.text = text
             self.step += 1
 
@@ -393,7 +397,6 @@ class Formatter(object):
     # those words to italics in the formatted document (if they can be found).
     def fixItalics(self):
         self.progress = "Fixing italics..."
-        print self.progress
         for p1 in self.document1.paragraphs:
             r = -1
             p2 = self.paragraphDict[p1.text]
@@ -417,8 +420,38 @@ class Formatter(object):
                     r2b.italic = True
             self.step += 4
 
+    def fixPeriodSpacing(self):
+        if not self.gettingSize: self.progress = "Fixing period spacing..."
+        for paragraph in self.document2.paragraphs:
+            text = paragraph.text
+            while (True):
+                k = regexlib.match(text,"#. <")
+                if k == -1: break
+                new = text[:k+1]
+                new += text[k+2:]
+                text = new
+            paragraph.text = text
+            self.step += 1
+            while (True):
+                k = regexlib.match(text,"# .<")
+                if k == -1: break
+                new = text[:k+1]
+                new += text[k+2:]
+                text = new
+            paragraph.text = text
+            self.step += 1
+            while (True):
+                k = regexlib.match(text,"# . >")
+                if k == -1: break
+                new = text[:k+1]
+                new += text[k+3:]
+                text = new
+            paragraph.text = text  
+            self.step += 1          
+
     # Calls the other methods in their proper order.
     def fix(self):
+        n = 0
         if not self.gettingSize: self.progress = "Fixing mistakes..."
         self.fixEmDash()
         self.fixDoubleQuotes()
@@ -437,6 +470,7 @@ class Formatter(object):
         self.insertAuthor()
         self.insertCopyright()
         self.insertPublisher()
+        self.fixPeriodSpacing()
 
     # Calls the other methods in their proper order.
     def format(self):
@@ -465,3 +499,4 @@ class Formatter(object):
         self.stage = "Complete"
         self.open()
         self.step = 0.0
+        self.steps = 0.0

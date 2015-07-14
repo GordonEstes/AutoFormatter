@@ -88,24 +88,20 @@ def match(s,sub):
 	k = 0 #Index within sub
 	n = -1 #Beginning of sub within s
 	found = False
+	def success(i,k,n,found):
+		if n == -1: n = i
+		i += 1
+		k += 1
+		found = True
+		return (i,k,n,found)
 	while True:
 		if k >= len(sub): return n #If we've reached the end of the substring, return n
 		if i >= len(s): break
-		if s[i] == sub[k]: #If they match, advance both.
-			if n == -1: n = i
-			i += 1
-			k += 1
-			found = True
-		elif sub[k] == "@": #If it's a wildcard, same thing.
-			if n == -1: n = i
-			i += 1
-			k += 1
-			found = True
-		elif sub[k] == "#" and s[i] in string.ascii_letters:
-			if n == -1: n = i
-			i += 1
-			k += 1
-			found = True
+		if s[i] == sub[k]: (i,k,n,found) = success(i,k,n,found)
+		elif sub[k] == "@": (i,k,n,found) = success(i,k,n,found)
+		elif sub[k] == "#" and s[i] in string.ascii_letters: (i,k,n,found) = success(i,k,n,found)
+		elif sub[k] == "<" and s[i] in string.ascii_lowercase: (i,k,n,found) = success(i,k,n,found)
+		elif sub[k] == ">" and s[i] in string.ascii_uppercase: (i,k,n,found) = success(i,k,n,found)
 		else: #Otherwise, if there's no match, start over.
 			if found: i = n + 1
 			else: i += 1

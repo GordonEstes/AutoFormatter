@@ -49,7 +49,6 @@ class FormatterApp(EventBasedAnimationClass):
     def browse(self):
         filename = tkFileDialog.askopenfile(parent=self.root,mode='rb',title='Choose a file')
         path = filename.name
-        print path
         filename.close()
         self.path = path
 
