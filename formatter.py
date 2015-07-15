@@ -37,6 +37,7 @@ class Formatter(object):
         self.steps = 0.0
         self.gettingSize = False
         self.paragraphDict = {}
+        self.numRuns = 0.0
         
     def initStyles(self):
         self.progress = "Initializing styles..."
@@ -96,8 +97,13 @@ class Formatter(object):
         paragraph_format.space_before = 0 #Set paragraph spacing to 0 pica.
         paragraph_format.space_after = 0 
         for p1 in document1.paragraphs: #Copy each paragraph from document1 to document 2.
-            p2 = document2.add_paragraph(p1.text)
-            self.paragraphDict[p1.text] = p2
+            p2 = document2.add_paragraph("")
+            for r1 in p1.runs:
+                r2 = p2.add_run(r1.text)
+                r2.font.italic = r1.font.italic
+                if "Italic" in r1.style.name: r2.font.italic = True
+                self.numRuns += 1
+        self.compressRuns()
 
     # Removes the following symbols from document2: "»","|","«","•","    "
     # Also changes em-dashes (—) into triple en-dashes (---) to avoid formatting
@@ -105,16 +111,18 @@ class Formatter(object):
     def removeSymbols(self):
         if not self.gettingSize: self.progress = "Removing symbols..."
         document2 = self.document2
+        self.step = 0.0
         for paragraph in document2.paragraphs:
-            text = paragraph.text
-            text = text.replace(u"—","---")
-            text = regexlib.removeAll(text,"»")
-            text = regexlib.removeAll(text,"|")
-            text = regexlib.removeAll(text,"«")
-            text = regexlib.removeAll(text,"•")
-            text = regexlib.removeAll(text,"    ")
-            paragraph.text = text
-            self.step += 1
+            for run in paragraph.runs:
+                text = run.text
+                text = text.replace(u"—","---")
+                text = regexlib.removeAll(text,"»")
+                text = regexlib.removeAll(text,"|")
+                text = regexlib.removeAll(text,"«")
+                text = regexlib.removeAll(text,"•")
+                text = regexlib.removeAll(text,"    ")
+                self.step += 1
+                run.text = text
 
     # Inserts a properly formatted (Heading 1) title at the top of the document.
     def insertTitle(self):
@@ -171,6 +179,7 @@ class Formatter(object):
     # paragraph.
     def fixDoubleQuotes(self):
         if not self.gettingSize: self.progress = "Fixing double quotes..."
+        self.psteps = 0.0
         for paragraph in self.document2.paragraphs:
             text = paragraph.text
             i = regexlib.match(text,u'” “')  
@@ -186,52 +195,55 @@ class Formatter(object):
     def convertPunctuation(self):
         if not self.gettingSize: self.progress = "Converting punctuation..."
         for paragraph in self.document2.paragraphs:
-            text = paragraph.text
-            punctuation = { 0x2018:0x27, 0x2019:0x27, 0x201C:0x22, 0x201D:0x22 }
-            text = u'%s' % text
-            text = text.translate(punctuation).encode('ascii', 'ignore')
-            paragraph.text = text
-            self.step += 1
+            for run in paragraph.runs:
+                text = run.text
+                punctuation = { 0x2018:0x27, 0x2019:0x27, 0x201C:0x22, 0x201D:0x22 }
+                text = u'%s' % text
+                text = text.translate(punctuation).encode('ascii', 'ignore')
+                run.text = text
+                self.step += 1
 
     # Replaces '---' with '—' and fixes em-dash spacing errors. 
     def fixEmDash(self):
         if not self.gettingSize: self.progress = "Fixing em-dashes..."
         document2 = self.document2
         for paragraph in document2.paragraphs:
-            text = paragraph.text
-            text = text.replace('---"',u'---”')
-            text = text.replace('"---',u'“---')
-            text = text.replace("---",u"—")
-            text = regexlib.replaceSub(text," — ","—")
-            text = regexlib.replaceSub(text," —","—")
-            text = regexlib.replaceSub(text,"— ","—")
-            paragraph.text = text
-            self.step += 1
+            for run in paragraph.runs:
+                text = run.text
+                text = text.replace('---"',u'---”')
+                text = text.replace('"---',u'“---')
+                text = text.replace("---",u"—")
+                text = regexlib.replaceSub(text," — ","—")
+                text = regexlib.replaceSub(text," —","—")
+                text = regexlib.replaceSub(text,"— ","—")
+                run.text = text
+                self.step += 1
 
     # Fixes some common quotation mark errors and changes ASCII quotation marks
     # to the appropriate Unicode quotation marks.
     def fixQuotations(self):
         if not self.gettingSize: self.progress = "Fixing quotations..."
         for paragraph in self.document2.paragraphs:
-            text = paragraph.text
-            text = regexlib.replaceSub(text,' "',u' “')
-            text = regexlib.replaceSub(text,'" ',u'” ')
-            text = regexlib.replaceSub(text,'."',u'.”')
-            text = regexlib.replaceSub(text,',"',u',”')
-            text = regexlib.replaceSub(text,'!"',u'!”')
-            text = regexlib.replaceSub(text,'?"',u'?”')
-            text = regexlib.replaceSub(text,'..."',u'...”')
-            text = regexlib.replaceSub(text,'#—"#',u'#—“#')
-            text = regexlib.replaceSub(text,'#"—#',u'#”—#')
-            text = regexlib.replaceSub(text,'#—"',u'#—”')
-            text = regexlib.replaceSub(text,'"—#',u'“—#')
-            text = regexlib.replaceSub(text,'’"',u'’”')
-            text = regexlib.replaceSub(text,'\'"',u'’”')
-            text = regexlib.replaceSub(text,'";',u'”;')
-            text = regexlib.replaceSub(text,'":',u'”:')
-            text = regexlib.replaceSub(text,'"',u'“')
-            paragraph.text = text
-            self.step += 1
+            for run in paragraph.runs:
+                text = run.text
+                text = regexlib.replaceSub(text,' "',u' “')
+                text = regexlib.replaceSub(text,'" ',u'” ')
+                text = regexlib.replaceSub(text,'."',u'.”')
+                text = regexlib.replaceSub(text,',"',u',”')
+                text = regexlib.replaceSub(text,'!"',u'!”')
+                text = regexlib.replaceSub(text,'?"',u'?”')
+                text = regexlib.replaceSub(text,'..."',u'...”')
+                text = regexlib.replaceSub(text,'#—"#',u'#—“#')
+                text = regexlib.replaceSub(text,'#"—#',u'#”—#')
+                text = regexlib.replaceSub(text,'#—"',u'#—”')
+                text = regexlib.replaceSub(text,'"—#',u'“—#')
+                text = regexlib.replaceSub(text,'’"',u'’”')
+                text = regexlib.replaceSub(text,'\'"',u'’”')
+                text = regexlib.replaceSub(text,'";',u'”;')
+                text = regexlib.replaceSub(text,'":',u'”:')
+                text = regexlib.replaceSub(text,'"',u'“')
+                run.text = text
+                self.step += 1
 
     # Removes the all-caps word(s) beginning each chapter, which are common to 
     # older stories
@@ -273,102 +285,107 @@ class Formatter(object):
     def fixApostrophes(self):
         if not self.gettingSize: self.progress = "Fixing apostrophes..."
         for paragraph in self.document2.paragraphs:
-            text = paragraph.text
-            text = regexlib.replaceSub(text,"''","\"")
-            text = regexlib.replaceSub(text," '",u' ‘')
-            text = regexlib.replaceSub(text,"' ",u'’ ')
-            text = regexlib.replaceSub(text,".'",u'.’')
-            text = regexlib.replaceSub(text,",'",u',’')
-            text = regexlib.replaceSub(text,"!'",u'!’')
-            text = regexlib.replaceSub(text,"?'",u'?’')
-            text = regexlib.replaceSub(text,"...'",u'...’')
-            text = regexlib.replaceSub(text,"'.",u'’.')
-            text = regexlib.replaceSub(text,"#—'#",u'#—‘#')
-            text = regexlib.replaceSub(text,"#'—#",u'#’—#')
-            text = regexlib.replaceSub(text,"#—'",u'#—’')
-            text = regexlib.replaceSub(text,"'—#",u'‘—#')
-            text = regexlib.replaceSub(text,"',",u'’,')
-            text = regexlib.replaceSub(text,"'!",u'’!')
-            text = regexlib.replaceSub(text,"'?",u'’?')
-            text = regexlib.replaceSub(text,"'...",u'’...')
-            text = regexlib.replaceSub(text,"#'#",u'#’#')
-            text = regexlib.replaceSub(text,"'",u'‘')
-            paragraph.text = text
-            self.step += 1
+            for run in paragraph.runs:
+                text = run.text
+                text = regexlib.replaceSub(text,"''","\"")
+                text = regexlib.replaceSub(text," '",u' ‘')
+                text = regexlib.replaceSub(text,"' ",u'’ ')
+                text = regexlib.replaceSub(text,".'",u'.’')
+                text = regexlib.replaceSub(text,",'",u',’')
+                text = regexlib.replaceSub(text,"!'",u'!’')
+                text = regexlib.replaceSub(text,"?'",u'?’')
+                text = regexlib.replaceSub(text,"...'",u'...’')
+                text = regexlib.replaceSub(text,"'.",u'’.')
+                text = regexlib.replaceSub(text,"#—'#",u'#—‘#')
+                text = regexlib.replaceSub(text,"#'—#",u'#’—#')
+                text = regexlib.replaceSub(text,"#—'",u'#—’')
+                text = regexlib.replaceSub(text,"'—#",u'‘—#')
+                text = regexlib.replaceSub(text,"',",u'’,')
+                text = regexlib.replaceSub(text,"'!",u'’!')
+                text = regexlib.replaceSub(text,"'?",u'’?')
+                text = regexlib.replaceSub(text,"'...",u'’...')
+                text = regexlib.replaceSub(text,"#'#",u'#’#')
+                text = regexlib.replaceSub(text,"'",u'‘')
+                run.text = text
+                self.step += 1
 
     # Removes double spaces and replaces them with single spaces.
     def fixDoubleSpace(self):
         if not self.gettingSize: self.progress = "Fixing double spaces..."
         for paragraph in self.document2.paragraphs:
-            while regexlib.match(paragraph.text, "  ") != -1:
-                paragraph.text = regexlib.replaceSub(paragraph.text, "  ", " ")
-            self.step += 1
+            for run in paragraph.runs:
+                while regexlib.match(run.text, "  ") != -1:
+                    run.text = regexlib.replaceSub(run.text, "  ", " ")
+                self.step += 1
 
     # Changes common ellipse misprints to proper formatting.
     def fixEllipses(self):
         if not self.gettingSize: self.progress = "Fixing ellipses..."
         for paragraph in self.document2.paragraphs:
-            text = paragraph.text
-            text = regexlib.replaceSub(text," . . . . .", "...")
-            text = regexlib.replaceSub(text," . . . .","...")
-            text = regexlib.replaceSub(text," . . .","...")
-            text = regexlib.replaceSub(text,". . . . .", "...")
-            text = regexlib.replaceSub(text,". . . .","...")
-            text = regexlib.replaceSub(text,". . .","...")
-            text = regexlib.replaceSub(text,".....","...")
-            text = regexlib.replaceSub(text,"....","...")
-            text = regexlib.replaceSub(text," . .",u'...”')
-            text = regexlib.replaceSub(text,". . ",u"“...")
-            paragraph.text = text   
-            self.step += 1  
+            for run in paragraph.runs:
+                text = run.text
+                text = regexlib.replaceSub(text," . . . . .", "...")
+                text = regexlib.replaceSub(text," . . . .","...")
+                text = regexlib.replaceSub(text," . . .","...")
+                text = regexlib.replaceSub(text,". . . . .", "...")
+                text = regexlib.replaceSub(text,". . . .","...")
+                text = regexlib.replaceSub(text,". . .","...")
+                text = regexlib.replaceSub(text,".....","...")
+                text = regexlib.replaceSub(text,"....","...")
+                text = regexlib.replaceSub(text," . .",u'...”')
+                text = regexlib.replaceSub(text,". . ",u"“...")
+                run.text = text   
+                self.step += 1
 
     # Fixes hyphen spacing, removes nonnecessary asterisks, and removes
     # additional symbols.      
     def fixPunctuation(self):
         if not self.gettingSize: self.progress = "Fixing punctuation..."
         for paragraph in self.document2.paragraphs:
-            text = paragraph.text
-            #Hyphens
-            text = regexlib.removeSub(text," -")
-            text = regexlib.replaceSub(text,"- ","-")
-            #Misc
-            text = regexlib.replaceSub(text,"/","I")
-            text = regexlib.removeSub(text,"\\")
-            text = regexlib.removeSub(text,"^")
-            #Asterisks
-            text = regexlib.replaceSub(text,"* * * *", "& & & &")
-            text = regexlib.removeSub(text,"*")
-            text = regexlib.replaceSub(text,"& & & &", "* * * *")
-            # Periods and Spacing
-            text = regexlib.replaceSub(text,"# .#","#  #")
-            text = regexlib.replaceSub(text,"  "," ")
-            text = regexlib.replaceSub(text,"“ ‘","“‘")
-            paragraph.text = text
-            self.step += 1
+            for run in paragraph.runs:
+                text = run.text
+                #Hyphens
+                text = regexlib.removeSub(text," -")
+                text = regexlib.replaceSub(text,"- ","-")
+                #Misc
+                text = regexlib.replaceSub(text,"/","I")
+                text = regexlib.removeSub(text,"\\")
+                text = regexlib.removeSub(text,"^")
+                #Asterisks
+                text = regexlib.replaceSub(text,"* * * *", "& & & &")
+                text = regexlib.removeSub(text,"*")
+                text = regexlib.replaceSub(text,"& & & &", "* * * *")
+                # Periods and Spacing
+                text = regexlib.replaceSub(text,"# .#","#  #")
+                text = regexlib.replaceSub(text,"  "," ")
+                text = regexlib.replaceSub(text,"“ ‘","“‘")
+                run.text = text
+                self.step += 1
 
     # Replaces/fixes words commonly mistaken by the scanner for one another.
     def fixWords(self):
         if not self.gettingSize: self.progress = "Fixing words..."
         for paragraph in self.document2.paragraphs:
-            text = paragraph.text
-            text = regexlib.replaceWord(text,"comer","corner")
-            text = regexlib.replaceWord(text,"bom","born")
-            text = regexlib.replaceWord(text,"modem","modern")
-            text = regexlib.replaceWord(text,"tiling","thing")
-            text = regexlib.replaceWord(text,"diat","that")
-            text = regexlib.replaceWord(text,"sec","see")
-            text = regexlib.replaceWord(text,"secs","sees")
-            text = regexlib.replaceWord(text,"Fd","I'd")
-            text = regexlib.replaceWord(text,"diem","them")
-            text = regexlib.replaceWord(text,"Modem","Modern")
-            text = regexlib.replaceSub(text,"‘Tm","“I'm")
-            text = regexlib.replaceWord(text,"tire","the")
-            text = regexlib.replaceSub(text,"boy friend","boyfriend")
-            text = regexlib.replaceSub(text,"girl friend","girlfriend")
-            text = regexlib.replaceSub(text,"Pie ", "He")
-            text = regexlib.replaceSub(text,"Fie,", "He")
-            paragraph.text = text
-            self.step += 1
+            for run in paragraph.runs:
+                text = run.text
+                text = regexlib.replaceWord(text,"comer","corner")
+                text = regexlib.replaceWord(text,"bom","born")
+                text = regexlib.replaceWord(text,"modem","modern")
+                text = regexlib.replaceWord(text,"tiling","thing")
+                text = regexlib.replaceWord(text,"diat","that")
+                text = regexlib.replaceWord(text,"sec","see")
+                text = regexlib.replaceWord(text,"secs","sees")
+                text = regexlib.replaceWord(text,"Fd","I'd")
+                text = regexlib.replaceWord(text,"diem","them")
+                text = regexlib.replaceWord(text,"Modem","Modern")
+                text = regexlib.replaceSub(text,"‘Tm","“I'm")
+                text = regexlib.replaceWord(text,"tire","the")
+                text = regexlib.replaceSub(text,"boy friend","boyfriend")
+                text = regexlib.replaceSub(text,"girl friend","girlfriend")
+                text = regexlib.replaceSub(text,"Pie ", "He")
+                text = regexlib.replaceSub(text,"Fie,", "He")
+                run.text = text
+                self.step += 1
 
     # Retrieves the total number of steps to be taken within the document in order
     # to properly set the loading bar.
@@ -376,7 +393,11 @@ class Formatter(object):
         self.progress = "Getting document size..."
         document2 = self.document2
         self.document2 = Document()
-        for paragraph in self.document1.paragraphs: self.document2.add_paragraph("")
+        self.steps = 19*self.numRuns
+        for paragraph in self.document1.paragraphs: 
+            p = self.document2.add_paragraph("")
+            for run in paragraph.runs:
+                r = p.add_run("")
         self.gettingSize = True
         self.format()
         self.fix()
@@ -398,61 +419,48 @@ class Formatter(object):
                 paragraph.text = ""
             self.step += 1
 
-    # Scans the original document for italicized words/paragraph runs and sets
-    # those words to italics in the formatted document (if they can be found).
-    def fixItalics(self):
-        self.progress = "Fixing italics..."
-        for p1 in self.document1.paragraphs:
-            r = -1
-            p2 = self.paragraphDict[p1.text]
-            for r1 in p1.runs:
-                r += 1
-                if r1.italic or "Italic" in r1.style.name:
-                    last = "" if r == 0 else p1.runs[r-1].text
-                    this = p1.runs[r].text
-                    next = "" if r == len(p1.runs) - 1 else p1.runs[r+1].text
-                    s = last+this+next
-                    i = regexlib.match(p2.text,s)
-                    if i == -1: continue
-                    i += len(last)
-                    k = i + len(this)
-                    r2a = p2.text[:i]
-                    r2b = p2.text[i:k]
-                    r2c = p2.text[k:]
-                    p2.text = r2a
-                    r2b = p2.add_run(r2b)
-                    p2.add_run(r2c)
-                    r2b.italic = True
-            self.step += 4
-
     def fixPeriodSpacing(self):
         if not self.gettingSize: self.progress = "Fixing period spacing..."
         for paragraph in self.document2.paragraphs:
-            text = paragraph.text
-            while (True):
-                k = regexlib.match(text,"#. <")
-                if k == -1: break
-                new = text[:k+1]
-                new += text[k+2:]
-                text = new
-            paragraph.text = text
-            self.step += 1
-            while (True):
-                k = regexlib.match(text,"# .<")
-                if k == -1: break
-                new = text[:k+1]
-                new += text[k+2:]
-                text = new
-            paragraph.text = text
-            self.step += 1
-            while (True):
-                k = regexlib.match(text,"# . >")
-                if k == -1: break
-                new = text[:k+1]
-                new += text[k+3:]
-                text = new
-            paragraph.text = text  
-            self.step += 1          
+            for run in paragraph.runs:
+                text = run.text
+                while (True):
+                    k = regexlib.match(text,"#. <")
+                    if k == -1: break
+                    new = text[:k+1]
+                    new += text[k+2:]
+                    text = new
+                run.text = text
+                self.step += 1
+                while (True):
+                    k = regexlib.match(text,"# .<")
+                    if k == -1: break
+                    new = text[:k+1]
+                    new += text[k+2:]
+                    text = new
+                run.text = text
+                self.step += 1
+                while (True):
+                    k = regexlib.match(text,"# . >")
+                    if k == -1: break
+                    new = text[:k+1]
+                    new += text[k+3:]
+                    text = new
+                run.text = text 
+                self.step += 1 
+
+    def compressRuns(self):
+        self.progress = "Compressing runs..."
+        for paragraph in self.document2.paragraphs:
+            i = 0
+            while i < len(paragraph.runs)-1:
+                r1 = paragraph.runs[i]
+                r2 = paragraph.runs[i+1]
+                if r1.font.italic == r2.font.italic:
+                    r1.text = r1.text + r2.text
+                    r2.clear()
+                i += 1
+
 
     # Calls the other methods in their proper order.
     def fix(self):
@@ -467,7 +475,6 @@ class Formatter(object):
         self.fixPunctuation()
         self.fixWords()
         self.fixCaps()
-        self.fixItalics()
         self.fixDoubleQuotes()
         self.fixCarriageReturn()
         self.formatSceneBreaks()
