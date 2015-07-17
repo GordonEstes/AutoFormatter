@@ -101,7 +101,8 @@ class Formatter(object):
             for r1 in p1.runs:
                 r2 = p2.add_run(r1.text)
                 r2.font.italic = r1.font.italic
-                if "Italic" in r1.style.name: r2.font.italic = True
+                if "Italic" in r1.style.name: 
+                    r2.font.italic = True
                 self.numRuns += 1
         self.compressRuns()
 
@@ -241,6 +242,8 @@ class Formatter(object):
                 text = regexlib.replaceSub(text,'\'"',u'’”')
                 text = regexlib.replaceSub(text,'";',u'”;')
                 text = regexlib.replaceSub(text,'":',u'”:')
+                text = regexlib.replaceSub(text,"' \"",u'’”')
+                text = regexlib.replaceSub(text,"’ \"",u'’”')
                 text = regexlib.replaceSub(text,'"',u'“')
                 run.text = text
                 self.step += 1
@@ -266,6 +269,18 @@ class Formatter(object):
                 paragraph.text = s
             self.step += 1
 
+    def mergeParagraphs(self,p1,p2):
+        for r2 in p2.runs:
+            r1 = p1.add_run(r2.text)
+            r1.font.italic = r2.font.italic
+            r2.clear()
+        self.deleteParagraph(p2)
+
+    def deleteParagraph(self,paragraph):
+        p = paragraph._element
+        p.getparent().remove(p)
+        p._p = p._element = None
+
     # Finds paragraphs beginning with a lowercase character and re-attaches them to the
     # end of the preceding paragraph.
     def fixCarriageReturn(self):
@@ -275,7 +290,8 @@ class Formatter(object):
             if paragraph == self.document2.paragraphs[0]: continue
             text = paragraph.text
             if last != None and len(text) >= 1 and text[0] in " qwertyuiopasdfghjklzxcvbnm":
-                doclib.mergeParagraphs(last,paragraph)
+                self.mergeParagraphs(last,paragraph)
+                # doclib.mergeParagraphs(last,paragraph)
             else:
                 last = paragraph
             self.step += 1
@@ -489,7 +505,6 @@ class Formatter(object):
         if not self.gettingSize: self.progress = "Formatting story..."
         self.removeSymbols()
         self.formatChapters()
-        self.convertPunctuation()
 
     # Opens the formatted docx after it's been saved.
     def open(self):
