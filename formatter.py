@@ -122,6 +122,7 @@ class Formatter(object):
                 text = regexlib.removeAll(text,"«")
                 text = regexlib.removeAll(text,"•")
                 text = regexlib.removeAll(text,"    ")
+                text = regexlib.removeAll(text,"_")
                 self.step += 1
                 run.text = text
 
@@ -245,6 +246,7 @@ class Formatter(object):
                 text = regexlib.replaceSub(text,"' \"",u'’”')
                 text = regexlib.replaceSub(text,"’ \"",u'’”')
                 text = regexlib.replaceSub(text,'"',u'“')
+                text = regexlib.replaceSub(text,"”’",u'’”')
                 run.text = text
                 self.step += 1
 
@@ -270,11 +272,16 @@ class Formatter(object):
             self.step += 1
 
     def mergeParagraphs(self,p1,p2):
+        last = None
+        for run in p1.runs:
+            last = run
+        if last != None and len(last.text) > 0 and last.text[-1] != " ": last.text += " "
         for r2 in p2.runs:
             r1 = p1.add_run(r2.text)
             r1.font.italic = r2.font.italic
             r2.clear()
         self.deleteParagraph(p2)
+        return p1
 
     def deleteParagraph(self,paragraph):
         p = paragraph._element
@@ -285,14 +292,29 @@ class Formatter(object):
     # end of the preceding paragraph.
     def fixCarriageReturn(self):
         if not self.gettingSize: self.progress = "Fixing carriage returns..."
-        last = None
+        last = None 
+        merge = False
         for paragraph in self.document2.paragraphs:
-            if paragraph == self.document2.paragraphs[0]: continue
             text = paragraph.text
-            if last != None and len(text) >= 1 and text[0] in " qwertyuiopasdfghjklzxcvbnm":
-                self.mergeParagraphs(last,paragraph)
-                # doclib.mergeParagraphs(last,paragraph)
+            if ("CHAPTER" in text or "Chapter" in text or "BOOK" in text or "Book" in text and len(text) <= len("Chapter XXXXIIII")):
+                last = "CHAPTER"
+                merge = False
+            elif self.chapterNames and last == "CHAPTER":
+                last = "TITLE"
+                merge = False
+            elif len(text) >= 1 and text[0] in string.ascii_lowercase and last != "CHAPTER" and last != "TITLE":
+                last = self.mergeParagraphs(last,paragraph)
+                merge = False
+            elif merge and str(type(last)) != "str":
+                last = self.mergeParagraphs(last,paragraph)
+                merge = False
+            elif not (regexlib.endsWith(text,"[.!?-:]") or
+                  regexlib.endsWith(text,"[.!?-:][\"']") or
+                  regexlib.endsWith(text,"[.!?-:]'\"")):
+                merge = True
+                last = paragraph
             else:
+                merge = False
                 last = paragraph
             self.step += 1
 
@@ -477,12 +499,12 @@ class Formatter(object):
                     r2.clear()
                 i += 1
 
-
     # Calls the other methods in their proper order.
     def fix(self):
         n = 0
         if not self.gettingSize: self.progress = "Fixing mistakes..."
         self.fixEmDash()
+        self.fixCarriageReturn()
         self.fixDoubleQuotes()
         self.fixApostrophes()
         self.fixQuotations()
@@ -492,7 +514,6 @@ class Formatter(object):
         self.fixWords()
         self.fixCaps()
         self.fixDoubleQuotes()
-        self.fixCarriageReturn()
         self.formatSceneBreaks()
         self.insertTitle()
         self.insertAuthor()

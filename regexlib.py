@@ -257,3 +257,94 @@ def clipRight(s,x):
 	k = i + len(x)
 	s = s[k:]
 	return reverse(s)
+
+def getRange(s):
+	j = s.find("[")
+	k = s.find("]")
+	s = s[j+1:k]
+	if len(s) == 3 and s[1] == "-" and s[0] != "\\":
+		if s[0] in string.ascii_lowercase and s[2] in string.ascii_lowercase:
+			i = string.ascii_lowercase.find(s[0])
+			j = string.ascii_lowercase.find(s[2])
+			if j < i: return ""
+			return string.ascii_lowercase[i:j+1]
+		elif s[0] in string.ascii_uppercase and s[2] in string.ascii_uppercase:
+			i = string.ascii_uppercase.find(s[0])
+			j = string.ascii_uppercase.find(s[2])
+			if j < i: return ""
+			return string.ascii_uppercase[i:j+1]
+	else:
+		charRange = ""
+		i = 0
+		while i < len(s):
+			if s[i] == "\\" and i < len(s) - 1:
+				charRange = charRange + s[i+1]
+				i += 2
+			else:
+				charRange = charRange + (s[i])
+				i += 1
+		return charRange
+
+def rxSplit(s):
+	subList = []
+	j = s.find("[")
+	k = s.find("]")
+	done = False
+	while True:
+		if j == -1 or k == -1 or k < j: break
+		charRange = getRange(s)
+		sub = s[:j] + "@"
+		s = s[k+1:]
+		subList.append((sub,charRange))
+		j = s.find("[")
+		k = s.find("]")
+	if s != "": subList.append((s,""))
+	return subList
+
+def rxFind(s,sub):
+	subList = rxSplit(sub)
+	i = 0 #Index within s
+	j = 0 #Index within sublist
+	k = 0 #Index within sub
+	n = -1 #Beginning of sub within s
+	found = False
+	def success(i,j,k,n,found):
+		if n == -1: n = i
+		i += 1
+		k += 1
+		if k >= len(sub):
+			j += 1
+			k = 0
+		found = True
+		return (i,j,k,n,found)
+	while True:
+		if j >= len(subList): return n #If we've reached the end of the substring, return n
+		(sub,charRange) = subList[j]
+		if i >= len(s): break
+		if s[i] == sub[k]: (i,j,k,n,found) = success(i,j,k,n,found)
+		elif sub[k] == "@" and s[i] in charRange: (i,j,k,n,found) = success(i,j,k,n,found)
+		else: #Otherwise, if there's no match, start over.
+			if found: i = n + 1
+			else: i += 1
+			found = False
+			k = 0
+			n = -1
+	return -1
+
+def endsWith(s,sub):
+	l = len(sub)
+	s = s[-l:]
+	return (rxFind(s,sub) != -1)
+
+def rxReplace(s,sub,new):
+	while True:
+		i = rxFind(s,sub)
+		newer = new
+		if i == -1: 
+			break
+		if len(new) == len(sub):
+			for j in xrange(len(new)):
+				if new[j] in "@#":
+					newer = replaceIndex(newer,j,s[i+j])
+		s = "%s%s%s" % (s[:i],newer,s[i+len(sub):])
+	return s
