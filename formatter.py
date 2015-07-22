@@ -123,6 +123,7 @@ class Formatter(object):
                 text = regexlib.removeAll(text,"•")
                 text = regexlib.removeAll(text,"    ")
                 text = regexlib.removeAll(text,"_")
+                text = regexlib.removeAll(text,"■")
                 self.step += 1
                 run.text = text
 
@@ -296,6 +297,9 @@ class Formatter(object):
         merge = False
         for paragraph in self.document2.paragraphs:
             text = paragraph.text
+            if (text == "") or ("*" in text) or (type(last) != str and last != None and (last.text == "" or "*" in last.text)):
+                last = paragraph
+                merge = False
             if ("CHAPTER" in text or "Chapter" in text or "BOOK" in text or "Book" in text and len(text) <= len("Chapter XXXXIIII")):
                 last = "CHAPTER"
                 merge = False
@@ -421,7 +425,7 @@ class Formatter(object):
                 text = regexlib.replaceSub(text,"boy friend","boyfriend")
                 text = regexlib.replaceSub(text,"girl friend","girlfriend")
                 text = regexlib.replaceSub(text,"Pie ", "He")
-                text = regexlib.replaceSub(text,"Fie,", "He")
+                text = regexlib.replaceSub(text,"Fie", "He")
                 run.text = text
                 self.step += 1
 
