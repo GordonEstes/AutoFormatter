@@ -21,19 +21,13 @@
 import string
 import os
 import unicodedata
+import re
 
 # Removes all instances of a substring (sub) from a string (s). Possibly redundant.
-def removeAll(s,sub):
-	while(match(s,sub) != -1):
-		s = removeSub(s,sub)
-	return s
-
-# Replaces all instances of substring (new) in string (s) with string (new). Possibly
-# redundant.
-def replaceAll(s,sub,new):
-	while(match(s,sub) != -1):
-		s = replaceSub(s,sub,new)
-	return s
+# def removeAll(s,sub):
+# 	while(match(s,sub) != -1):
+# 		s = removeSub(s,sub)
+# 	return s
 
 # Returns a list containing the Unicode name of each sequential character in the
 # given string (s).
@@ -84,6 +78,10 @@ def symbolEq(s1,s2):
 # for a wildcard, and "#" stands for an alphabetic wildcard (i.e., abc...ABC...).
 def match(s,sub):
 	if len(sub) > len(s): return -1
+	if "@" not in sub and "#" not in sub and "<" not in sub and ">" not in sub:
+		# return s.find(sub)
+		try: return s.find(sub)
+		except: pass
 	i = 0 #Index within s
 	k = 0 #Index within sub
 	n = -1 #Beginning of sub within s
@@ -167,13 +165,14 @@ def matchWord(s,sub,n=0):
 
 # Removes a regex substring from a larger string and returns the result.
 def removeSub(s,sub):
-	i = 0
-	while True:
-		i = match(s,sub)
-		if i == -1: 
-			break
-		s = s[:i] + s[i+len(sub):]
-	return s
+	return replaceSub(s,sub,"")
+	# i = 0
+	# while True:
+	# 	i = match(s,sub)
+	# 	if i == -1: 
+	# 		break
+	# 	s = s[:i] + s[i+len(sub):]
+	# return s
 
 # Returns a version of string (s) with the character at index (i) replaced
 # with the character (t).
@@ -189,7 +188,7 @@ def replaceSub(s,sub,new):
 		newer = new
 		if i == -1: 
 			break
-		if len(new) == len(sub):
+		if len(new) == len(sub) and "@" in new or "#" in new:
 			for j in xrange(len(new)):
 				if new[j] in "@#":
 					newer = replaceIndex(newer,j,s[i+j])
@@ -348,3 +347,7 @@ def rxReplace(s,sub,new):
 					newer = replaceIndex(newer,j,s[i+j])
 		s = "%s%s%s" % (s[:i],newer,s[i+len(sub):])
 	return s
+
+s = re.compile('hello world')
+s2 = 'llo w'
+print s.search(s2)

@@ -8,6 +8,8 @@
 ################
 
 import sys
+# reload(sys)  
+# sys.setdefaultencoding('utf8')
 # sys.path.insert(0,"/Users/Gordon/Gordon's Files/AutoFormatter/lib")
 import filelib, listlib, regexlib, doclib, numlib
 import os, string
@@ -19,6 +21,7 @@ from docx.shared import Inches
 from docx.shared import Pt
 from story import Story
 import Tkinter as tk
+import time
 
 # The Formatter is an object that is able to take in a Story object and return a properly
 # formatted version.
@@ -95,7 +98,9 @@ class Formatter(object):
         document2 = self.document2
         paragraph_format = document2.styles['Normal'].paragraph_format
         paragraph_format.space_before = 0 #Set paragraph spacing to 0 pica.
-        paragraph_format.space_after = 0 
+        paragraph_format.space_after = 0
+        self.steps = 0.0
+        for p1 in document1.paragraphs: self.steps += 1 
         for p1 in document1.paragraphs: #Copy each paragraph from document1 to document 2.
             p2 = document2.add_paragraph("")
             for r1 in p1.runs:
@@ -104,6 +109,7 @@ class Formatter(object):
                 if "Italic" in r1.style.name: 
                     r2.font.italic = True
                 self.numRuns += 1
+            self.step += 1.0
         self.compressRuns()
 
     # Removes the following symbols from document2: "»","|","«","•","    "
@@ -117,13 +123,13 @@ class Formatter(object):
             for run in paragraph.runs:
                 text = run.text
                 text = text.replace(u"—","---")
-                text = regexlib.removeAll(text,"»")
-                text = regexlib.removeAll(text,"|")
-                text = regexlib.removeAll(text,"«")
-                text = regexlib.removeAll(text,"•")
-                text = regexlib.removeAll(text,"    ")
-                text = regexlib.removeAll(text,"_")
-                text = regexlib.removeAll(text,"■")
+                text = regexlib.removeSub(text,"»")
+                text = regexlib.removeSub(text,"|")
+                text = regexlib.removeSub(text,"«")
+                text = regexlib.removeSub(text,"•")
+                text = regexlib.removeSub(text,"    ")
+                text = regexlib.removeSub(text,"_")
+                text = regexlib.removeSub(text,"■")
                 self.step += 1
                 run.text = text
 
@@ -274,6 +280,8 @@ class Formatter(object):
 
     def mergeParagraphs(self,p1,p2):
         last = None
+        if p1 == None: return p2
+        elif p2 == None: return p1
         for run in p1.runs:
             last = run
         if last != None and len(last.text) > 0 and last.text[-1] != " ": last.text += " "
@@ -499,6 +507,7 @@ class Formatter(object):
 
     def compressRuns(self):
         self.progress = "Compressing runs..."
+        self.step = 0.0
         for paragraph in self.document2.paragraphs:
             i = 0
             while i < len(paragraph.runs)-1:
@@ -509,6 +518,7 @@ class Formatter(object):
                     r2.clear()
                     self.deleteRun(r2)
                 i += 1
+            self.step += 1
 
     # Calls the other methods in their proper order.
     def fix(self):
@@ -551,9 +561,11 @@ class Formatter(object):
         self.progress = "Running formatter..."
         sys.stdout.flush()
         self.build()
+        start = time.time()
         self.getSize()
         self.format()
         self.fix()
+        print time.time() - start
         self.save()
         self.stage = "Complete"
         self.open()
