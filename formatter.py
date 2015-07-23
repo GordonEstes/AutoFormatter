@@ -420,12 +420,13 @@ class Formatter(object):
                 text = regexlib.replaceWord(text,"Fd","I'd")
                 text = regexlib.replaceWord(text,"diem","them")
                 text = regexlib.replaceWord(text,"Modem","Modern")
-                text = regexlib.replaceSub(text,"‘Tm","“I'm")
+                text = regexlib.replaceSub(text,"‘Tm","“I’m")
+                text = regexlib.replaceSub(text,"Td","“I’d")
                 text = regexlib.replaceWord(text,"tire","the")
                 text = regexlib.replaceSub(text,"boy friend","boyfriend")
                 text = regexlib.replaceSub(text,"girl friend","girlfriend")
-                text = regexlib.replaceSub(text,"Pie ", "He")
-                text = regexlib.replaceSub(text,"Fie", "He")
+                text = regexlib.replaceWord(text,"Pie", "He")
+                text = regexlib.replaceWord(text,"Fie", "He")
                 run.text = text
                 self.step += 1
 
@@ -491,6 +492,11 @@ class Formatter(object):
                 run.text = text 
                 self.step += 1 
 
+    def deleteRun(self,run):
+        r = run._element
+        r.getparent().remove(r)
+        r._r = r._element = None
+
     def compressRuns(self):
         self.progress = "Compressing runs..."
         for paragraph in self.document2.paragraphs:
@@ -501,6 +507,7 @@ class Formatter(object):
                 if r1.font.italic == r2.font.italic:
                     r1.text = r1.text + r2.text
                     r2.clear()
+                    self.deleteRun(r2)
                 i += 1
 
     # Calls the other methods in their proper order.
