@@ -22,6 +22,7 @@ from docx.shared import Pt
 from story import Story
 import Tkinter as tk
 import time
+import unzip
 
 # The Formatter is an object that is able to take in a Story object and return a properly
 # formatted version.
@@ -559,13 +560,14 @@ class Formatter(object):
     # Sets the local result variable by processing the local story variable.
     def run(self):
         self.progress = "Running formatter..."
+        unzip.fixXML(self.story.path)
         sys.stdout.flush()
         self.build()
         start = time.time()
         self.getSize()
         self.format()
         self.fix()
-        print time.time() - start
+        print "%f seconds" % float(int(time.time() - start))
         self.save()
         self.stage = "Complete"
         self.open()
